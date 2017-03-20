@@ -40,7 +40,9 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -65,7 +67,6 @@ public class AddBoard extends AppCompatActivity implements EasyPermissions.Permi
     GoogleAccountCredential mCredential;
     ProgressDialog mProgress;
 
-    private static final int REQUEST_CODE = 0;
     private static final String PREF_ACCOUNT_NAME = "accountName";
     private static final String[] SCOPES = { SheetsScopes.SPREADSHEETS_READONLY };
 
@@ -90,20 +91,16 @@ public class AddBoard extends AppCompatActivity implements EasyPermissions.Permi
             mOutputText.setText(ex.getMessage());
         }
 
-        Log.i("TAG_TEST", listApplication.size()+"");
 
-        initializeSpinners();
-
-        Log.i("TAG_TEST", listApplication.size()+"");
 
     }
 
-    private void initializeSpinners() {
+    private void initializeSpinners(List<String> valuesSpinner) {
 
         Spinner sApp = (Spinner) findViewById(R.id.spiApp);
         Spinner sPla = (Spinner) findViewById(R.id.spiPlat);
         Spinner sMod = (Spinner) findViewById(R.id.spiMod);
-        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, listApplication);
+        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, valuesSpinner.toArray());
         ArrayAdapter adapter1 = new ArrayAdapter(this, android.R.layout.simple_spinner_item, listPlatform);
         ArrayAdapter adapter2 = new ArrayAdapter(this, android.R.layout.simple_spinner_item, listModel);
         sApp.setAdapter(adapter);
@@ -351,40 +348,29 @@ public class AddBoard extends AppCompatActivity implements EasyPermissions.Permi
          * @throws IOException
          */
         private List<String> getDataFromApi() throws IOException {
+
             String spreadsheetId = "13rNNl0Dwr1kX6NqQkrTgwzdv6ttgRi-aqmn8fEhKaXE";
-            String range = "Names!A6:F";
-            List<String> results = new ArrayList<String>();
+            String rangeAplicacao = "Aplicacao!A:B";
+
+            LinkedHashMap<String,String> result = new LinkedHashMap<>();
+
             ValueRange response = this.mService.spreadsheets().values()
-                    .get(spreadsheetId, range)
+                    .get(spreadsheetId, rangeAplicacao)
                     .execute();
+
             List<List<Object>> values = response.getValues();
 
-            /***
-             *
-             */
-
             if (values != null) {
-                //results.add("cod app, Aplicacao, cod plat, Plataforma, cod model, Modelo");
                 for(int i=0;i<values.size();i++){
                     List row = values.get(i);
 
                     for(int j=0;j<row.size();j++){
-                        switch (j) {
-                            case 1:
-                                if (!listApplication.contains(row.get(j)))
-                                    listApplication.add(row.get(j)+"");
-                                break;
-                            case 3:
-                                    listPlatform.add(row.get(j)+"");
-                                break;
-                            case 5:
-                                    listModel.add(row.get(j)+"");
-                                break;
-                        }
+                        result.put(row.get(0)+"",row.get(1)+"");
                     }
                 }
             }
-            return results;
+
+            return new ArrayList<>(result.values());
 
         }
 
@@ -402,7 +388,7 @@ public class AddBoard extends AppCompatActivity implements EasyPermissions.Permi
             if (output == null || output.size() == 0) {
                 mOutputText.setText("No results returned.");
             } else {
-                //output.add(0, "Data retrieved using the Google Sheets API:");
+                initializeSpinners(output);
                 mOutputText.setText(TextUtils.join("\n", output));
             }
         }
