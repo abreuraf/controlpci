@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">ControlPCI</string>
+    <string name="btn_toread">Click on button to read qrCode</string>
+</resources>

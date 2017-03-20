@@ -1,40 +1,9 @@
 # Built application files
-/*/build/
-
-# Crashlytics configuations
-com_crashlytics_export_strings.xml
-
-# Local configuration file (sdk path, etc)
-local.properties
-
-# Gradle generated files
-.gradle/
-
-# Signing files
-.signing/
-
-# OS-specific files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Linux specific files
-*._
-*._/
-
-# Built application files
 *.apk
 *.ap_
 
-# Files for the ART/Dalvik VM
-*.dex
-
-# Java class files
-*.class
+# Built application files
+build/
 
 # Generated files
 bin/
@@ -52,13 +21,36 @@ captures/
 
 # Intellij
 *.iml
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/gradle.xml
-.idea/dictionaries
-.idea/libraries
 .idea/
-*.iml
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Gradle generated files
+.gradle/
+.gradle*
+
+# Signing files
+.signing/
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Linux specific files
+._*
+._/*
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
 
 # Keystore files
 *.jks
@@ -68,3 +60,6 @@ captures/
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
+
+# Crashlytics configuations
+com_crashlytics_export_strings.xml
