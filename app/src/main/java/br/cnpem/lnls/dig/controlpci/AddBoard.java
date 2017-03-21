@@ -16,11 +16,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -32,7 +35,9 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
+import com.google.api.services.sheets.v4.model.BatchGetValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
 import java.io.IOException;
@@ -56,10 +61,6 @@ import static br.cnpem.lnls.dig.controlpci.TestDriveApi.REQUEST_PERMISSION_GET_A
 
 
 public class AddBoard extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
-
-    public List<String> listApplication = new ArrayList<String>();
-    private List<String> listPlatform = new ArrayList<String>();
-    private List<String> listModel = new ArrayList<String>();
 
     private Button btnAdd;
     private TextView mOutputText;
@@ -91,18 +92,57 @@ public class AddBoard extends AppCompatActivity implements EasyPermissions.Permi
             mOutputText.setText(ex.getMessage());
         }
 
+        EditText edtInfo = (EditText) findViewById(R.id.editText);
 
+        btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getApplicationContext(), "Começar a enviar",
+                        Toast.LENGTH_LONG).setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+            }
+        });
 
     }
 
-    private void initializeSpinners(List<String> valuesSpinner) {
+    private void initializeSpinners(List<ValueRange> values) {
 
         Spinner sApp = (Spinner) findViewById(R.id.spiApp);
         Spinner sPla = (Spinner) findViewById(R.id.spiPlat);
         Spinner sMod = (Spinner) findViewById(R.id.spiMod);
-        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, valuesSpinner.toArray());
-        ArrayAdapter adapter1 = new ArrayAdapter(this, android.R.layout.simple_spinner_item, listPlatform);
-        ArrayAdapter adapter2 = new ArrayAdapter(this, android.R.layout.simple_spinner_item, listModel);
+
+        List<String> arApp = new ArrayList<>();
+        List<String> arPla = new ArrayList<>();
+        List<String> arMod = new ArrayList<>();
+
+        for (int i = 0; i < values.size();i++) {
+            List<List<Object>> val = values.get(i).getValues();
+            for (int j = 0; j < val.size();j++) {
+                List<Object> row = val.get(j);
+                String addValue = row.get(1).toString();
+                switch (i) {
+                    case 0:
+                        try {
+                            arApp.add(addValue);
+                        } catch (Exception ex) {}
+                        break;
+                    case 1:
+                        try {
+                            arPla.add(addValue);
+                        } catch (Exception ex) {}
+                        break;
+                    case 2:
+                        try {
+                            arMod.add(addValue);
+                        } catch (Exception ex) {}
+                        break;
+                }
+
+            }
+        }
+
+        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, arApp.toArray());
+        ArrayAdapter adapter1 = new ArrayAdapter(this, android.R.layout.simple_spinner_item, arPla.toArray());
+        ArrayAdapter adapter2 = new ArrayAdapter(this, android.R.layout.simple_spinner_item, arMod.toArray());
         sApp.setAdapter(adapter);
         sPla.setAdapter(adapter1);
         sMod.setAdapter(adapter2);
@@ -313,7 +353,7 @@ public class AddBoard extends AppCompatActivity implements EasyPermissions.Permi
      * An asynchronous task that handles the Google Sheets API call.
      * Placing the API calls in their own task ensures the UI stays responsive.
      */
-    private class MakeRequestTask extends AsyncTask<Void, Void, List<String>> {
+    private class MakeRequestTask extends AsyncTask<Void, Void, List<ValueRange>> {
         private com.google.api.services.sheets.v4.Sheets mService = null;
         private Exception mLastError = null;
 
@@ -331,7 +371,7 @@ public class AddBoard extends AppCompatActivity implements EasyPermissions.Permi
          * @param params no parameters needed for this task.
          */
         @Override
-        protected List<String> doInBackground(Void... params) {
+        protected List<ValueRange> doInBackground(Void... params) {
             try {
                 return getDataFromApi();
             } catch (Exception e) {
@@ -347,30 +387,22 @@ public class AddBoard extends AppCompatActivity implements EasyPermissions.Permi
          * @return List of names and majors
          * @throws IOException
          */
-        private List<String> getDataFromApi() throws IOException {
+        private List<ValueRange> getDataFromApi() throws IOException {
 
             String spreadsheetId = "13rNNl0Dwr1kX6NqQkrTgwzdv6ttgRi-aqmn8fEhKaXE";
-            String rangeAplicacao = "Aplicacao!A:B";
 
-            LinkedHashMap<String,String> result = new LinkedHashMap<>();
+            List<String> range = new ArrayList<>();
+            range.add("Aplicacao!A:B");
+            range.add("Plataforma!A:B");
+            range.add("Modelo!A:B");
 
-            ValueRange response = this.mService.spreadsheets().values()
-                    .get(spreadsheetId, rangeAplicacao)
-                    .execute();
+            Sheets.Spreadsheets.Values.BatchGet response = this.mService.spreadsheets().values().batchGet(spreadsheetId);
+            response.setRanges(range);
+            BatchGetValuesResponse result = response.execute();
 
-            List<List<Object>> values = response.getValues();
+            List<ValueRange> values = result.getValueRanges();
 
-            if (values != null) {
-                for(int i=0;i<values.size();i++){
-                    List row = values.get(i);
-
-                    for(int j=0;j<row.size();j++){
-                        result.put(row.get(0)+"",row.get(1)+"");
-                    }
-                }
-            }
-
-            return new ArrayList<>(result.values());
+            return values;
 
         }
 
@@ -383,13 +415,13 @@ public class AddBoard extends AppCompatActivity implements EasyPermissions.Permi
 
 
         @Override
-        protected void onPostExecute(List<String> output) {
+        protected void onPostExecute(List<ValueRange> output) {
             mProgress.hide();
             if (output == null || output.size() == 0) {
                 mOutputText.setText("No results returned.");
             } else {
                 initializeSpinners(output);
-                mOutputText.setText(TextUtils.join("\n", output));
+                //mOutputText.setText(TextUtils.join("\n", output));
             }
         }
 

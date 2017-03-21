@@ -14,7 +14,9 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="br.cnpem.lnls.dig.controlpci.AddBoard"
     android:orientation="vertical"
-    android:scrollbars="vertical">
+    android:scrollbars="vertical"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
 
     <TextView
         android:text="Aplicação"
@@ -83,7 +85,8 @@
         android:id="@+id/editText"
         android:singleLine="false"
         android:selectAllOnFocus="false"
-        android:focusable="false" />
+        android:nextFocusUp="@id/editText"
+        android:nextFocusDown="@id/editText" />
 
     <Button
         android:text="Cadastrar"
